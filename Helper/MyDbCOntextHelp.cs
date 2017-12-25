@@ -14,6 +14,10 @@ namespace SpiderForSis001.Helper
         {
             using (var db = new MyDbContext())
             {
+                if (db.MoviePages.Any(m=>m.Url==model.Url))
+                {
+                    return true;
+                }
                 db.MoviePages.Add(model);
                 return db.SaveChanges() >= 1;
             }
@@ -23,6 +27,10 @@ namespace SpiderForSis001.Helper
         {
             using (var db = new MyDbContext())
             {
+                if (db.Resources.Any(m => m.Url == model.Url))
+                {
+                    return true;
+                }
                 db.Resources.Add(model);
                 return db.SaveChanges() >= 1;
             }
@@ -31,6 +39,10 @@ namespace SpiderForSis001.Helper
         {
             using (var db = new MyDbContext())
             {
+                if (db.ErroeProcesses.Any(m => m.Url == model.Url))
+                {
+                    return true;
+                }
                 db.ErroeProcesses.Add(model);
                 return db.SaveChanges() >= 1;
             }
@@ -40,15 +52,27 @@ namespace SpiderForSis001.Helper
         {
             using (var db = new MyDbContext())
             {
+                for (int i = 0; i < model.Count; i++)
+                {
+                    var item = model[i];
+                    if (db.Resources.Any(m => m.Url == item.Url))
+                    {
+                        model.Remove(item);
+                    }
+                }
                 db.Resources.AddRange(model);
                 return db.SaveChanges() >= model.Count;
             }
         }
-        public static bool ExistMovie(string name)
+        public static bool ExistMovie(string movieUrl)
         {
             using (var db = new MyDbContext())
             {
-                return db.MoviePages.Any(m=>m.Name==name);
+                if (db.MoviePages.Any(m => m.Url == movieUrl))
+                {
+                    return true;
+                }
+                return db.MoviePages.Any(m=>m.Name==movieUrl);
             }
         }
 

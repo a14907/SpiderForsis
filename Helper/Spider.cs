@@ -86,15 +86,15 @@ namespace SpiderForSis001.Helper
             //第一页数据缓存过不需要处理
             if (index == 0)
             {
-                await ProcessAsync(_firstPageStr ?? await HttpHelp.GetPageStringAsync(_pageList[index]));
+                ProcessAsync(_firstPageStr ?? await HttpHelp.GetPageStringAsync(_pageList[index]));
             }
             else
             {
-                await ProcessAsync(await HttpHelp.GetPageStringAsync(_pageList[index]));
+                ProcessAsync(await HttpHelp.GetPageStringAsync(_pageList[index]));
             }
         }
         private int[] waitopt = new int[] { 100, 200, 300, 400 };
-        private async Task ProcessAsync(string pageStr)
+        private void ProcessAsync(string pageStr)
         {
             try
             {
@@ -123,9 +123,9 @@ namespace SpiderForSis001.Helper
                     LogHelp.Log("进度：{0}/{1}，符合要求", i, ms.Count, true);
                     //获取详情页的信息
                     _semaphore.WaitOne();
-                    //Thread.Sleep(waitopt[_random.Next(1000) % 4]);
-                    //ThreadPool.QueueUserWorkItem(ProcessDetail, item);
-                    await ProcessDetailAsync(item);
+                    Thread.Sleep(waitopt[_random.Next(1000) % 4]);
+                    ThreadPool.QueueUserWorkItem(ProcessDetailAsync, item);
+                    //await ProcessDetailAsync(item);
                 }
             }
             catch (Exception ex)
@@ -135,16 +135,17 @@ namespace SpiderForSis001.Helper
             }
         }
 
-        private async Task ProcessDetailAsync(object stat)
+        private async void ProcessDetailAsync(object stat)
         {
             var item = stat as Match;
             MoviePage pageModel = null;
             string movieName = ValidFileName(item.Groups[2].Value);
+            var movieUrl = _uri.Scheme + "://" + _uri.Authority + "/bbs/" + item.Groups[1].Value;
             string moviedir = null;
 
-            if (MyDbCOntextHelp.ExistMovie(movieName))
+            if (MyDbCOntextHelp.ExistMovie(movieUrl))
             {
-                pageModel = MyDbCOntextHelp.QueryMovie(m => m.Name == movieName);
+                pageModel = MyDbCOntextHelp.QueryMovie(m => m.Url == movieUrl);
                 moviedir = Path.Combine(_baseDir, pageModel.Name);
             }
             else
@@ -154,7 +155,7 @@ namespace SpiderForSis001.Helper
                     CreateTime = DateTime.Now,
                     UpdateTime = DateTime.Now,
                     Name = movieName,
-                    Url = _uri.Scheme + "://" + _uri.Authority + "/bbs/" + item.Groups[1].Value,
+                    Url = movieUrl,
                     IsHandler = false,
                     Type = _typeName,
                 };
@@ -215,6 +216,10 @@ namespace SpiderForSis001.Helper
                     IsHandler = false,
                 };
                 var p1 = detailPageString.IndexOf("检查重复</a>");
+                if (p1==-1)
+                {
+                    return;
+                }
                 var startbt = detailPageString.IndexOf("<a href=\"", p1);
                 var endbt = detailPageString.IndexOf("</a>", startbt);
                 var bta = detailPageString.Substring(startbt, endbt - startbt + 4);
