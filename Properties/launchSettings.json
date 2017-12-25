@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SpiderForSis001": {
+      "commandName": "Project",
+      "commandLineArgs": "http://38.103.161.140/bbs/forum-230-1.html 有码 50"
+    }
+  }
+}
