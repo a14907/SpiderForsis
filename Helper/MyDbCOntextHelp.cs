@@ -27,6 +27,14 @@ namespace SpiderForSis001.Helper
                 return db.SaveChanges() >= 1;
             }
         }
+        public static bool AddErroeProcess(ErroeProcess model)
+        {
+            using (var db = new MyDbContext())
+            {
+                db.ErroeProcesses.Add(model);
+                return db.SaveChanges() >= 1;
+            }
+        }
 
         public static bool AddResourceList(List<Resource> model)
         {

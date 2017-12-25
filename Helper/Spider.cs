@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SpiderForSis001.Helper
 {
@@ -54,14 +55,14 @@ namespace SpiderForSis001.Helper
             _startPart = string.Format("<table summary=\"forum_{0}\" id=\"forum_{0}\" cellspacing=\"0\" cellpadding=\"0\">", partstr);
         }
 
-        internal void Run()
+        internal async Task RunAsync()
         {
             //准备环境，创建目录
             Init();
             //获取总页数
-            if (ProcessTotalPageCount()==false)
+            if (await ProcessTotalPageCountAsync() == false)
             {
-                LogHelp.Log("操作失败。。。",true);
+                LogHelp.Log("操作失败。。。", true);
                 return;
             }
 
@@ -70,7 +71,7 @@ namespace SpiderForSis001.Helper
             {
                 LogHelp.Log("正在处理第{0}/{1}页。。。", i + 1, _totalPage, true);
                 //处理当前分页数据
-                ProcessPage(i);
+                await ProcessPageAsync(i);
             }
             for (int i = 0; i < _threadCount; i++)
             {
@@ -80,53 +81,61 @@ namespace SpiderForSis001.Helper
             _isFinish = true;
         }
 
-        private void ProcessPage(int index)
+        private async Task ProcessPageAsync(int index)
         {
             //第一页数据缓存过不需要处理
             if (index == 0)
             {
-                Process(_firstPageStr ?? HttpHelp.GetPageString(_pageList[index]));
+                await ProcessAsync(_firstPageStr ?? await HttpHelp.GetPageStringAsync(_pageList[index]));
             }
             else
             {
-                Process(HttpHelp.GetPageString(_pageList[index]));
+                await ProcessAsync(await HttpHelp.GetPageStringAsync(_pageList[index]));
             }
         }
         private int[] waitopt = new int[] { 100, 200, 300, 400 };
-        private void Process(string pageStr)
+        private async Task ProcessAsync(string pageStr)
         {
-            if (pageStr==null || pageStr.Length==0)
+            try
             {
-                return;
-            }
-            var startPos = pageStr.LastIndexOf(_startPart) + _startPart.Length;
-            var endPos = pageStr.IndexOf(_endPart, startPos);
-            var dataArea = pageStr.Substring(startPos, endPos - startPos);
-
-            var ms = _regA.Matches(dataArea);
-            LogHelp.Log("本页一共{0}个链接需要判断。。。", ms.Count, true);
-            for (int i = 0; i < ms.Count; i++)
-            {
-                var item = ms[i];
-                var u = item.Groups[1].Value;
-                var name = item.Groups[2].Value;
-                bool isnum = false; int num = 0;
-                isnum = int.TryParse(name, out num);
-                if (isnum || u.Contains(".php") || name.Contains("<"))
+                if (pageStr == null || pageStr.Length == 0 || pageStr.Contains("您无权进行当前操作，这可能因以下原因之一造成"))
                 {
-                    //LogHelp.Log("进度：{0}/{1},不符合要求。。。", i, ms.Count);
-                    continue;
+                    return;
                 }
-                LogHelp.Log("进度：{0}/{1}，符合要求", i, ms.Count, true);
-                //获取详情页的信息
-                _semaphore.WaitOne();
-                //Thread.Sleep(waitopt[_random.Next(1000) % 4]);
-                //ThreadPool.QueueUserWorkItem(ProcessDetail, item);
-                ProcessDetail(item);
+                var startPos = pageStr.LastIndexOf(_startPart) + _startPart.Length;
+                var endPos = pageStr.IndexOf(_endPart, startPos);
+                var dataArea = pageStr.Substring(startPos, endPos - startPos);
+
+                var ms = _regA.Matches(dataArea);
+                LogHelp.Log("本页一共{0}个链接需要判断。。。", ms.Count, true);
+                for (int i = 0; i < ms.Count; i++)
+                {
+                    var item = ms[i];
+                    var u = item.Groups[1].Value;
+                    var name = item.Groups[2].Value;
+                    bool isnum = false; int num = 0;
+                    isnum = int.TryParse(name, out num);
+                    if (isnum || u.Contains(".php") || name.Contains("<"))
+                    {
+                        //LogHelp.Log("进度：{0}/{1},不符合要求。。。", i, ms.Count);
+                        continue;
+                    }
+                    LogHelp.Log("进度：{0}/{1}，符合要求", i, ms.Count, true);
+                    //获取详情页的信息
+                    _semaphore.WaitOne();
+                    //Thread.Sleep(waitopt[_random.Next(1000) % 4]);
+                    //ThreadPool.QueueUserWorkItem(ProcessDetail, item);
+                    await ProcessDetailAsync(item);
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw;
             }
         }
 
-        private void ProcessDetail(object stat)
+        private async Task ProcessDetailAsync(object stat)
         {
             var item = stat as Match;
             MoviePage pageModel = null;
@@ -160,8 +169,8 @@ namespace SpiderForSis001.Helper
             if (pageModel.Id != 0 || MyDbCOntextHelp.AddPicturePage(pageModel))
             {
                 bool res = false;
-                var detailPageString = HttpHelp.GetPageString(pageModel.Url);
-                if (detailPageString==null || detailPageString.Length==0)
+                var detailPageString = await HttpHelp.GetPageStringAsync(pageModel.Url);
+                if (detailPageString == null || detailPageString.Length == 0 || detailPageString.Contains("您无权进行当前操作，这可能因以下原因之一造成"))
                 {
                     return;
                 }
@@ -194,7 +203,6 @@ namespace SpiderForSis001.Helper
                         r.Url = _uri.Scheme + "://" + _uri.Authority + "/bbs/" + r.Url;
                     }
                     resList.Add(r);
-                    res = HttpHelp.DownloadImg(r.Url, moviedir);
                 }
                 LogHelp.Log("截图{0}张.....bt文件一个", mimgs.Count);
                 //bt 检查重复
@@ -214,9 +222,13 @@ namespace SpiderForSis001.Helper
                 btRes.Name = mbt.Groups[2].Value;
                 btRes.Url = _uri.Scheme + "://" + _uri.Authority + "/bbs/" + mbt.Groups[1].Value;
                 resList.Add(btRes);
-                res = HttpHelp.DownloadFile(btRes.Url, Path.Combine(moviedir, btRes.Name));
 
                 MyDbCOntextHelp.AddResourceList(resList);
+                for (int i = 0; i < resList.Count-1; i++)
+                {
+                    res = await HttpHelp.DownloadImgAsync(resList[i].Url, moviedir);
+                }
+                res = await HttpHelp.DownloadFileAsync(btRes.Url, Path.Combine(moviedir, btRes.Name));
             }
             _semaphore.Release();
             LogHelp.Log("处理完毕：" + movieName, true);
@@ -233,7 +245,7 @@ namespace SpiderForSis001.Helper
             LogHelp.Log("目录存在：" + _baseDir);
         }
 
-        private bool ProcessTotalPageCount()
+        private async Task<bool> ProcessTotalPageCountAsync()
         {
             if (_frontCount != null)
             {
@@ -242,8 +254,8 @@ namespace SpiderForSis001.Helper
                 GeneratePageList();
                 return true;
             }
-            _firstPageStr = HttpHelp.GetPageString(_url);
-            if (_firstPageStr==null || _firstPageStr.Length==0)
+            _firstPageStr = await HttpHelp.GetPageStringAsync(_url);
+            if (_firstPageStr == null || _firstPageStr.Length == 0)
             {
                 return false;
             }

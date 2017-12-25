@@ -9,6 +9,7 @@ using System.IO;
 using System.Threading;
 using System.Text.RegularExpressions;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace SpiderForSis001
 {
@@ -54,7 +55,8 @@ namespace SpiderForSis001
                 argLen >= 3 ? (int?)int.Parse(args[2]) : null,
                 argLen == 4 ? int.Parse(args[3]) : 20);
             Console.WriteLine("Begin");
-            spider.Run();
+            new TaskFactory().StartNew(()=> spider.RunAsync()).Unwrap().GetAwaiter().GetResult();
+            
 
 
             Console.WriteLine("End");

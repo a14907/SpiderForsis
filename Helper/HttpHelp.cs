@@ -12,7 +12,7 @@ namespace SpiderForSis001.Helper
 {
     public static class HttpHelp
     {
-        private static HttpClient client = new HttpClient();
+        private static HttpClient client = new HttpClient() { Timeout=new TimeSpan(0,0,10)};
         public static string GetPageString(string url)
         {
             string res = null;
@@ -41,11 +41,21 @@ namespace SpiderForSis001.Helper
                     res = null;
                 }
             } while ((res == null || res.Length == 0) && t <= 2);
+            if (res == null || res.Length == 0)
+            {
+                MyDbCOntextHelp.AddErroeProcess(new Data.ErroeProcess
+                {
+                    CreateTime = DateTime.Now,
+                    Type = 3,
+                    Url = url
+                });
+            }
             return res;
         }
 
         public static async Task<string> GetPageStringAsync(string url)
         {
+            Console.WriteLine("下载：" + url);
             string res = null;
             int t = 0;
             do
@@ -58,7 +68,7 @@ namespace SpiderForSis001.Helper
                     {
                         using (var sr = new StreamReader(resStream, Encoding.GetEncoding("GBK")))
                         {
-                            res = sr.ReadToEnd();
+                            res = await sr.ReadToEndAsync();
                         }
                     }
 
@@ -69,6 +79,15 @@ namespace SpiderForSis001.Helper
                     res = null;
                 }
             } while ((res == null || res.Length == 0) && t <= 2);
+            if (res == null || res.Length==0)
+            {
+                MyDbCOntextHelp.AddErroeProcess(new Data.ErroeProcess
+                {
+                    CreateTime = DateTime.Now,
+                    Type = 3,
+                    Url = url
+                });
+            }
             return res;
         }
         public static bool DownloadFile(string url, string fileName)
@@ -118,41 +137,74 @@ namespace SpiderForSis001.Helper
                     res = false;
                 }
             } while (res == false && t <= 2);
+            if (!res)
+            {
+                MyDbCOntextHelp.AddErroeProcess(new Data.ErroeProcess
+                {
+                    CreateTime = DateTime.Now,
+                    Type = 2,
+                    Url = url
+                });
+            }
             return res;
         }
-        public static async Task DownloadFileAsync(string url, string path)
+
+
+        public static async Task<bool> DownloadFileAsync(string url, string fileName)
         {
-            try
+            Console.WriteLine("下载：" + url);
+            bool res = false;
+            int t = 0;
+            do
             {
-                var respMsg = await client.GetAsync(url);
-                using (var resStream = await respMsg.Content.ReadAsStreamAsync())
+                t++;
+                try
                 {
-                    var fileName = Path.Combine(path, GetFileName(respMsg.Content.Headers.GetValues("Content-Disposition").First())) + DateTime.Now.Ticks;
-                    using (var FileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
+                    //如果文件存在，则不需要再接受，直接返回
+                    if (File.Exists(fileName) && new FileInfo(fileName).Length != 0)
                     {
-                        byte[] buf = new byte[1024 * 500];
-                        Console.WriteLine("buf len:" + buf.Length);
-                        int blen = 0;
-                        int sum = 0;
-                        do
-                        {
-                            blen = resStream.Read(buf, 0, buf.Length);
-                            Console.WriteLine("blen:" + blen);
-                            sum += blen;
-                            if (blen != 0)
-                                FileStream.Write(buf, 0, blen);
-                        } while (blen != 0);
-                        Console.WriteLine("sum:" + sum);
+                        return true;
                     }
+                    var respMsg = await client.GetAsync(url);
+                    using (var resStream = await respMsg.Content.ReadAsStreamAsync())
+                    {
+                        //如果文件存在，则不需要再接受，直接返回
+                        if (File.Exists(fileName) && new FileInfo(fileName).Length == respMsg.Content.Headers.ContentLength)
+                        {
+                            return true;
+                        }
+                        using (var FileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite, 4096, true))
+                        {
+                            byte[] buf = new byte[1024 * 500];
+                            int blen = 0;
+                            do
+                            {
+                                blen = await resStream.ReadAsync(buf, 0, buf.Length);
+                                if (blen != 0)
+                                    await FileStream.WriteAsync(buf, 0, blen);
+                            } while (blen != 0);
+                        }
+                        res = true;
+                    }
+
                 }
-            }
-            catch (Exception ex)
+                catch (Exception ex)
+                {
+                    LogHelp.Log("bt文件获取失败：" + url + "," + ex.Message + "," + ex.StackTrace, true);
+                    res = false;
+                }
+            } while (res == false && t <= 2);
+            if (!res)
             {
-
-                throw;
+                MyDbCOntextHelp.AddErroeProcess(new Data.ErroeProcess
+                {
+                    CreateTime = DateTime.Now,
+                    Type = 2,
+                    Url = url
+                });
             }
+            return res;
         }
-
 
         public static Regex regexForFileName = new Regex("filename=\"(.+?)\"", RegexOptions.Compiled);
         private static string GetFileName(string disposition)
@@ -177,7 +229,7 @@ namespace SpiderForSis001.Helper
                     var fileName = Path.Combine(path, Path.GetFileName(url));//如果文件存在，则不需要再接受，直接返回
                     if (File.Exists(fileName) && new FileInfo(fileName).Length != 0)
                     {
-                        res = true;
+                        return true;
                     }
                     var request = WebRequest.Create(url) as HttpWebRequest;
                     request.Method = "GET";
@@ -188,7 +240,7 @@ namespace SpiderForSis001.Helper
                             //如果文件存在，则不需要再接受，直接返回
                             if (File.Exists(fileName) && new FileInfo(fileName).Length == response.ContentLength)
                             {
-                                res = true;
+                                return true;
                             }
                             using (var FileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
                             {
@@ -204,17 +256,27 @@ namespace SpiderForSis001.Helper
                             res = true;
                         }
                     }
-                }
+                } 
                 catch (Exception ex)
                 {
                     LogHelp.Log("图片获取失败：" + url + "," + ex.Message + "," + ex.StackTrace, true);
                     res = false;
                 }
             } while (res == false && t <= 2);
+            if (!res)
+            {
+                MyDbCOntextHelp.AddErroeProcess(new Data.ErroeProcess
+                {
+                    CreateTime = DateTime.Now,
+                    Type = 1,
+                    Url = url
+                });
+            }
             return res;
         }
         public static async Task<bool> DownloadImgAsync(string url, string path)
         {
+            Console.WriteLine("下载：" + url);
             bool res = false;
             int t = 0;
             do
@@ -225,7 +287,7 @@ namespace SpiderForSis001.Helper
                     var fileName = Path.Combine(path, Path.GetFileName(url));//如果文件存在，则不需要再接受，直接返回
                     if (File.Exists(fileName) && new FileInfo(fileName).Length != 0)
                     {
-                        res = true;
+                        return true;
                     }
                     var respMsg = await client.GetAsync(url);
                     using (var resStream = await respMsg.Content.ReadAsStreamAsync())
@@ -233,29 +295,38 @@ namespace SpiderForSis001.Helper
                         //如果文件存在，则不需要再接受，直接返回
                         if (File.Exists(fileName) && new FileInfo(fileName).Length == respMsg.Content.Headers.ContentLength)
                         {
-                            res = true;
+                            return true;
                         }
-                        using (var FileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
+                        using (var FileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write,FileShare.ReadWrite,4096,true))
                         {
                             byte[] buf = new byte[1024 * 500];
                             int blen = 0;
                             do
                             {
-                                blen = resStream.Read(buf, 0, buf.Length);
+                                blen = await resStream.ReadAsync(buf, 0, buf.Length);
                                 if (blen != 0)
-                                    FileStream.Write(buf, 0, blen);
+                                    await FileStream.WriteAsync(buf, 0, blen);
                             } while (blen != 0);
                         }
                         res = true;
                     }
 
-                }
+                } 
                 catch (Exception ex)
                 {
                     LogHelp.Log("图片获取失败：" + url + "," + ex.Message + "," + ex.StackTrace, true);
                     res = false;
                 }
             } while (res == false && t <= 2);
+            if (!res)
+            {
+                MyDbCOntextHelp.AddErroeProcess(new Data.ErroeProcess
+                {
+                    CreateTime = DateTime.Now,
+                    Type = 1,
+                    Url = url
+                });
+            }
             return res;
         }
     }

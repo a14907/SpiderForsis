@@ -10,6 +10,7 @@ namespace SpiderForSis001.Data
     {
         public DbSet<MoviePage> MoviePages { get; set; }
         public DbSet<Resource> Resources { get; set; }
+        public DbSet<ErroeProcess> ErroeProcesses { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -33,6 +34,10 @@ namespace SpiderForSis001.Data
             resource.HasKey(m => m.Id);
             resource.Property(m => m.Id).ValueGeneratedOnAdd();
             resource.HasOne(m => m.PicturePage).WithMany(n => n.Resources).HasForeignKey(m=>m.PicturePageId);
+
+            var erroeProcess = modelBuilder.Entity<ErroeProcess>();
+            erroeProcess.HasKey(m => m.Id);
+            erroeProcess.Property(m => m.Id).ValueGeneratedOnAdd();
 
             base.OnModelCreating(modelBuilder);
         }

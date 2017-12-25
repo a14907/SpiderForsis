@@ -260,6 +260,9 @@ paket-files/
 __pycache__/
 *.pyc
 
-无码/
-有码/
+无码
+有码
+无码/*
+有码/*
 MyDb.db
+/鏈夌爜
