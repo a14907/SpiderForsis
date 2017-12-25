@@ -39,6 +39,7 @@ namespace SpiderForSis001
         /// <param name="args"></param>
         static void Main(string[] args)
         {
+            ThreadPool.QueueUserWorkItem(ClearScreen);
             int argLen = args.Length;
             if (argLen==1 && args[0]=="/?")
             {
@@ -60,6 +61,15 @@ namespace SpiderForSis001
 
 
             Console.WriteLine("End");
+        }
+
+        private static void ClearScreen(object state)
+        {
+            while (true)
+            {
+                Thread.Sleep(100000);
+                Console.Clear();
+            }
         }
     }
 }
