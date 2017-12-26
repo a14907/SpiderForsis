@@ -13,6 +13,10 @@ namespace SpiderForSis001.Helper
     public static class HttpHelp
     {
         private static HttpClient client = new HttpClient() { Timeout=new TimeSpan(0,0,10)};
+        static HttpHelp()
+        {
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36");
+        }
         public static string GetPageString(string url)
         {
             string res = null;
@@ -24,6 +28,7 @@ namespace SpiderForSis001.Helper
                 {
                     var request = WebRequest.Create(url) as HttpWebRequest;
                     request.Method = "GET";
+                    request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36";
                     using (var response = request.GetResponse())
                     {
                         using (var resStream = response.GetResponseStream())
@@ -106,6 +111,7 @@ namespace SpiderForSis001.Helper
                     }
                     var request = WebRequest.Create(url) as HttpWebRequest;
                     request.Method = "GET";
+                    request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36";
                     request.KeepAlive = true;
                     using (var response = request.GetResponse())
                     {
@@ -233,6 +239,7 @@ namespace SpiderForSis001.Helper
                     }
                     var request = WebRequest.Create(url) as HttpWebRequest;
                     request.Method = "GET";
+                    request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36";
                     using (var response = request.GetResponse())
                     {
                         using (var resStream = response.GetResponseStream())

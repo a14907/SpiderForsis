@@ -95,7 +95,7 @@ namespace SpiderForSis001.Helper
             }
         }
         private int[] waitopt = new int[] { 100, 200, 300, 400 };
-        private void ProcessAsync(string pageStr)
+        private async Task ProcessAsync(string pageStr)
         {
             try
             {
@@ -124,9 +124,9 @@ namespace SpiderForSis001.Helper
                     LogHelp.Log("进度：{0}/{1}，符合要求", i, ms.Count, true);
                     //获取详情页的信息
                     _semaphore.WaitOne();
-                    Thread.Sleep(waitopt[_random.Next(1000) % 4]);
-                    ThreadPool.QueueUserWorkItem(ProcessDetailAsync, item);
-                    //await ProcessDetailAsync(item);
+                    //Thread.Sleep(waitopt[_random.Next(1000) % 4]);
+                    //ThreadPool.QueueUserWorkItem(ProcessDetailAsync, item);
+                    ProcessDetailAsync(item);
                 }
             }
             catch (Exception ex)
