@@ -72,6 +72,7 @@ namespace SpiderForSis001.Helper
                 LogHelp.Log("正在处理第{0}/{1}页。。。", i + 1, _totalPage, true);
                 //处理当前分页数据
                 await ProcessPageAsync(i);
+                Program.isFinish = true;
             }
             for (int i = 0; i < _threadCount; i++)
             {

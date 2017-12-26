@@ -16,6 +16,7 @@ namespace SpiderForSis001
 
     class Program
     {
+        public static bool isFinish = false;
         static Program()
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -67,8 +68,16 @@ namespace SpiderForSis001
         {
             while (true)
             {
-                Thread.Sleep(100000);
-                Console.Clear();
+                if (!isFinish)
+                {
+                    Thread.Sleep(100000);
+                    Console.Clear();
+                }
+                else
+                {
+                    Console.WriteLine("All end!");
+                    break;
+                }
             }
         }
     }
