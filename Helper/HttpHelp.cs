@@ -37,7 +37,7 @@ namespace SpiderForSis001.Helper
                 }
                 catch (Exception ex)
                 {
-                    LogHelp.Log("页面获取失败：" + url + "," + ex.Message + "," + ex.StackTrace, true);
+                    LogHelp.Log("页面获取失败：" + url , true);
                     res = null;
                 }
             } while ((res == null || res.Length == 0) && t <= 2);
@@ -75,7 +75,7 @@ namespace SpiderForSis001.Helper
                 }
                 catch (Exception ex)
                 {
-                    LogHelp.Log("页面获取失败：" + url + "," + ex.Message + "," + ex.StackTrace, true);
+                    LogHelp.Log("页面获取失败：" + url , true);
                     res = null;
                 }
             } while ((res == null || res.Length == 0) && t <= 2);
@@ -118,7 +118,7 @@ namespace SpiderForSis001.Helper
                             }
                             using (var FileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
                             {
-                                byte[] buf = new byte[1024 * 500];
+                                byte[] buf = new byte[8192];
                                 int blen = 0;
                                 do
                                 {
@@ -133,7 +133,7 @@ namespace SpiderForSis001.Helper
                 }
                 catch (Exception ex)
                 {
-                    LogHelp.Log("bt文件获取失败：" + url + "," + ex.Message + "," + ex.StackTrace, true);
+                    LogHelp.Log("bt文件获取失败：" + url , true);
                     res = false;
                 }
             } while (res == false && t <= 2);
@@ -175,7 +175,7 @@ namespace SpiderForSis001.Helper
                         }
                         using (var FileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite, 4096, true))
                         {
-                            byte[] buf = new byte[1024 * 500];
+                            byte[] buf = new byte[1024*1024];
                             int blen = 0;
                             do
                             {
@@ -190,7 +190,7 @@ namespace SpiderForSis001.Helper
                 }
                 catch (Exception ex)
                 {
-                    LogHelp.Log("bt文件获取失败：" + url + "," + ex.Message + "," + ex.StackTrace, true);
+                    LogHelp.Log("bt文件获取失败：" + url , true);
                     res = false;
                 }
             } while (res == false && t <= 2);
@@ -244,7 +244,7 @@ namespace SpiderForSis001.Helper
                             }
                             using (var FileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
                             {
-                                byte[] buf = new byte[1024 * 500];
+                                byte[] buf = new byte[8192];
                                 int blen = 0;
                                 do
                                 {
@@ -259,7 +259,7 @@ namespace SpiderForSis001.Helper
                 } 
                 catch (Exception ex)
                 {
-                    LogHelp.Log("图片获取失败：" + url + "," + ex.Message + "," + ex.StackTrace, true);
+                    LogHelp.Log("图片获取失败：" + url, true);
                     res = false;
                 }
             } while (res == false && t <= 2);
@@ -299,7 +299,7 @@ namespace SpiderForSis001.Helper
                         }
                         using (var FileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write,FileShare.ReadWrite,4096,true))
                         {
-                            byte[] buf = new byte[1024 * 500];
+                            byte[] buf = new byte[1024 * 1024];
                             int blen = 0;
                             do
                             {
@@ -314,7 +314,7 @@ namespace SpiderForSis001.Helper
                 } 
                 catch (Exception ex)
                 {
-                    LogHelp.Log("图片获取失败：" + url + "," + ex.Message + "," + ex.StackTrace, true);
+                    LogHelp.Log("图片获取失败：" + url , true);
                     res = false;
                 }
             } while (res == false && t <= 2);
