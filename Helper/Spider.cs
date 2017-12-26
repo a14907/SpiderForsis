@@ -57,7 +57,6 @@ namespace SpiderForSis001.Helper
 
         internal async Task RunAsync()
         {
-            var res = await HttpHelp.GetPageStringAsync("http://38.103.161.140/bbs/thread-10091032-1-2.html");
             //准备环境，创建目录
             Init();
             //获取总页数
@@ -98,42 +97,34 @@ namespace SpiderForSis001.Helper
         private int[] waitopt = new int[] { 100, 200, 300, 400 };
         private void ProcessAsync(string pageStr)
         {
-            try
+            if (pageStr == null || pageStr.Length == 0 || pageStr.Contains("您无权进行当前操作，这可能因以下原因之一造成"))
             {
-                if (pageStr == null || pageStr.Length == 0 || pageStr.Contains("您无权进行当前操作，这可能因以下原因之一造成"))
-                {
-                    return;
-                }
-                var startPos = pageStr.LastIndexOf(_startPart) + _startPart.Length;
-                var endPos = pageStr.IndexOf(_endPart, startPos);
-                var dataArea = pageStr.Substring(startPos, endPos - startPos);
-
-                var ms = _regA.Matches(dataArea);
-                LogHelp.Log("本页一共{0}个链接需要判断。。。", ms.Count, true);
-                for (int i = 0; i < ms.Count; i++)
-                {
-                    var item = ms[i];
-                    var u = item.Groups[1].Value;
-                    var name = item.Groups[2].Value;
-                    bool isnum = false; int num = 0;
-                    isnum = int.TryParse(name, out num);
-                    if (isnum || u.Contains(".php") || name.Contains("<"))
-                    {
-                        //LogHelp.Log("进度：{0}/{1},不符合要求。。。", i, ms.Count);
-                        continue;
-                    }
-                    LogHelp.Log("进度：{0}/{1}，符合要求:{2}", i, ms.Count, item.Groups[1].Value, true);
-                    //获取详情页的信息
-                    _semaphore.WaitOne();
-                    Thread.Sleep(waitopt[_random.Next(1000) % 4]);
-                    ThreadPool.QueueUserWorkItem(ProcessDetailAsync, item);
-                    //ProcessDetailAsync(item);
-                }
+                return;
             }
-            catch (Exception ex)
-            {
+            var startPos = pageStr.LastIndexOf(_startPart) + _startPart.Length;
+            var endPos = pageStr.IndexOf(_endPart, startPos);
+            var dataArea = pageStr.Substring(startPos, endPos - startPos);
 
-                throw;
+            var ms = _regA.Matches(dataArea);
+            LogHelp.Log("本页一共{0}个链接需要判断。。。", ms.Count, true);
+            for (int i = 0; i < ms.Count; i++)
+            {
+                var item = ms[i];
+                var u = item.Groups[1].Value;
+                var name = item.Groups[2].Value;
+                bool isnum = false; int num = 0;
+                isnum = int.TryParse(name, out num);
+                if (isnum || u.Contains(".php") || name.Contains("<"))
+                {
+                    //LogHelp.Log("进度：{0}/{1},不符合要求。。。", i, ms.Count);
+                    continue;
+                }
+                LogHelp.Log("进度：{0}/{1}，符合要求:{2}", i, ms.Count, item.Groups[1].Value, true);
+                //获取详情页的信息
+                _semaphore.WaitOne();
+                Thread.Sleep(waitopt[_random.Next(1000) % 4]);
+                ThreadPool.QueueUserWorkItem(ProcessDetailAsync, item);
+                //ProcessDetailAsync(item);
             }
         }
 
