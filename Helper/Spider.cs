@@ -72,13 +72,13 @@ namespace SpiderForSis001.Helper
                 LogHelp.Log("正在处理第{0}/{1}页。。。", i + 1, _totalPage, true);
                 //处理当前分页数据
                 await ProcessPageAsync(i);
-                Program.isFinish = true;
             }
             for (int i = 0; i < _threadCount; i++)
             {
                 _semaphore.WaitOne();
             }
             LogHelp.Log("处理完毕！。。。。", true);
+            Program.isFinish = true;
             _isFinish = true;
         }
 
@@ -124,9 +124,9 @@ namespace SpiderForSis001.Helper
                     LogHelp.Log("进度：{0}/{1}，符合要求", i, ms.Count, true);
                     //获取详情页的信息
                     _semaphore.WaitOne();
-                    //Thread.Sleep(waitopt[_random.Next(1000) % 4]);
-                    //ThreadPool.QueueUserWorkItem(ProcessDetailAsync, item);
-                    ProcessDetailAsync(item);
+                    Thread.Sleep(waitopt[_random.Next(1000) % 4]);
+                    ThreadPool.QueueUserWorkItem(ProcessDetailAsync, item);
+                    //ProcessDetailAsync(item);
                 }
             }
             catch (Exception ex)
@@ -217,7 +217,7 @@ namespace SpiderForSis001.Helper
                     IsHandler = false,
                 };
                 var p1 = detailPageString.IndexOf("检查重复</a>");
-                if (p1==-1)
+                if (p1 == -1)
                 {
                     return;
                 }
@@ -230,7 +230,7 @@ namespace SpiderForSis001.Helper
                 resList.Add(btRes);
 
                 MyDbCOntextHelp.AddResourceList(resList);
-                for (int i = 0; i < resList.Count-1; i++)
+                for (int i = 0; i < resList.Count - 1; i++)
                 {
                     res = await HttpHelp.DownloadImgAsync(resList[i].Url, moviedir);
                 }
