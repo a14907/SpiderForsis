@@ -62,7 +62,7 @@ namespace SpiderForSis001.Helper
             //获取总页数
             if (await ProcessTotalPageCountAsync() == false)
             {
-                LogHelp.Log("操作失败。。。", true);
+                LogHelp.Log("=================================操作失败。。。", true);
                 return;
             }
 
@@ -95,7 +95,7 @@ namespace SpiderForSis001.Helper
             }
         }
         private int[] waitopt = new int[] { 100, 200, 300, 400 };
-        private async Task ProcessAsync(string pageStr)
+        private void ProcessAsync(string pageStr)
         {
             try
             {
@@ -121,7 +121,7 @@ namespace SpiderForSis001.Helper
                         //LogHelp.Log("进度：{0}/{1},不符合要求。。。", i, ms.Count);
                         continue;
                     }
-                    LogHelp.Log("进度：{0}/{1}，符合要求", i, ms.Count, true);
+                    LogHelp.Log("进度：{0}/{1}，符合要求", i, ms.Count);
                     //获取详情页的信息
                     _semaphore.WaitOne();
                     Thread.Sleep(waitopt[_random.Next(1000) % 4]);
@@ -138,107 +138,113 @@ namespace SpiderForSis001.Helper
 
         private async void ProcessDetailAsync(object stat)
         {
-            var item = stat as Match;
-            MoviePage pageModel = null;
-            string movieName = ValidFileName(item.Groups[2].Value);
-            var movieUrl = _uri.Scheme + "://" + _uri.Authority + "/bbs/" + item.Groups[1].Value;
-            string moviedir = null;
+            try
+            {
+                var item = stat as Match;
+                MoviePage pageModel = null;
+                string movieName = ValidFileName(item.Groups[2].Value);
+                var movieUrl = _uri.Scheme + "://" + _uri.Authority + "/bbs/" + item.Groups[1].Value;
+                string moviedir = null;
 
-            if (MyDbCOntextHelp.ExistMovie(movieUrl))
-            {
-                pageModel = MyDbCOntextHelp.QueryMovie(m => m.Url == movieUrl);
-                moviedir = Path.Combine(_baseDir, pageModel.Name);
-            }
-            else
-            {
-                pageModel = new MoviePage
+                if (MyDbCOntextHelp.ExistMovie(movieUrl))
                 {
-                    CreateTime = DateTime.Now,
-                    UpdateTime = DateTime.Now,
-                    Name = movieName,
-                    Url = movieUrl,
-                    IsHandler = false,
-                    Type = _typeName,
-                };
-
-                LogHelp.Log("影片：" + pageModel.Name);
-                moviedir = Path.Combine(_baseDir, pageModel.Name);
-            }
-            if (!Directory.Exists(moviedir))
-            {
-                Directory.CreateDirectory(moviedir);
-            }
-            if (pageModel.Id != 0 || MyDbCOntextHelp.AddPicturePage(pageModel))
-            {
-                bool res = false;
-                var detailPageString = await HttpHelp.GetPageStringAsync(pageModel.Url);
-                if (detailPageString == null || detailPageString.Length == 0 || detailPageString.Contains("您无权进行当前操作，这可能因以下原因之一造成"))
-                {
-                    return;
+                    pageModel = MyDbCOntextHelp.QueryMovie(m => m.Url == movieUrl);
+                    moviedir = Path.Combine(_baseDir, pageModel.Name);
                 }
-                //下载次数
-                var m = _regDownloadCount.Match(detailPageString);
-                if (m.Groups.Count == 2)
+                else
                 {
-                    pageModel.DownloadCount = int.Parse(m.Groups[1].Value);
-                }
-                LogHelp.Log("影片下载次数：" + pageModel.DownloadCount);
-                //图片
-                var imgAreaStr = _regImgArea.Match(detailPageString).Value;
+                    pageModel = new MoviePage
+                    {
+                        CreateTime = DateTime.Now,
+                        UpdateTime = DateTime.Now,
+                        Name = movieName,
+                        Url = movieUrl,
+                        IsHandler = false,
+                        Type = _typeName,
+                    };
 
-                var mimgs = _regImg.Matches(imgAreaStr);
-                var resList = new List<Resource>(mimgs.Count + 1);
-                for (int j = 0; j < mimgs.Count; j++)
+                    LogHelp.Log("影片：" + pageModel.Name);
+                    moviedir = Path.Combine(_baseDir, pageModel.Name);
+                }
+                if (!Directory.Exists(moviedir))
                 {
-                    var imgitem = mimgs[j];
-                    var r = new Resource
+                    Directory.CreateDirectory(moviedir);
+                }
+                if (pageModel.Id != 0 || MyDbCOntextHelp.AddPicturePage(pageModel))
+                {
+                    bool res = false;
+                    var detailPageString = await HttpHelp.GetPageStringAsync(pageModel.Url);
+                    if (detailPageString == null || detailPageString.Length == 0 || detailPageString.Contains("您无权进行当前操作，这可能因以下原因之一造成"))
+                    {
+                        return;
+                    }
+                    //下载次数
+                    var m = _regDownloadCount.Match(detailPageString);
+                    if (m.Groups.Count == 2)
+                    {
+                        pageModel.DownloadCount = int.Parse(m.Groups[1].Value);
+                    }
+                    LogHelp.Log("影片下载次数：" + pageModel.DownloadCount);
+                    //图片
+                    var imgAreaStr = _regImgArea.Match(detailPageString).Value;
+
+                    var mimgs = _regImg.Matches(imgAreaStr);
+                    var resList = new List<Resource>(mimgs.Count + 1);
+                    for (int j = 0; j < mimgs.Count; j++)
+                    {
+                        var imgitem = mimgs[j];
+                        var r = new Resource
+                        {
+                            CreateTime = DateTime.Now,
+                            UpdateTime = DateTime.Now,
+                            PicturePageId = pageModel.Id,
+                            IsHandler = false,
+                            Type = 1,
+                            Url = imgitem.Groups[1].Value
+                        };
+                        if (!r.Url.StartsWith("http"))
+                        {
+                            r.Url = _uri.Scheme + "://" + _uri.Authority + "/bbs/" + r.Url;
+                        }
+                        resList.Add(r);
+                    }
+                    LogHelp.Log("截图{0}张.....bt文件一个", mimgs.Count);
+                    //bt 检查重复
+                    var btRes = new Resource
                     {
                         CreateTime = DateTime.Now,
                         UpdateTime = DateTime.Now,
                         PicturePageId = pageModel.Id,
+                        Type = 2,
                         IsHandler = false,
-                        Type = 1,
-                        Url = imgitem.Groups[1].Value
                     };
-                    if (!r.Url.StartsWith("http"))
+                    var p1 = detailPageString.IndexOf("检查重复</a>");
+                    if (p1 == -1)
                     {
-                        r.Url = _uri.Scheme + "://" + _uri.Authority + "/bbs/" + r.Url;
+                        return;
                     }
-                    resList.Add(r);
-                }
-                LogHelp.Log("截图{0}张.....bt文件一个", mimgs.Count);
-                //bt 检查重复
-                var btRes = new Resource
-                {
-                    CreateTime = DateTime.Now,
-                    UpdateTime = DateTime.Now,
-                    PicturePageId = pageModel.Id,
-                    Type = 2,
-                    IsHandler = false,
-                };
-                var p1 = detailPageString.IndexOf("检查重复</a>");
-                if (p1 == -1)
-                {
-                    return;
-                }
-                var startbt = detailPageString.IndexOf("<a href=\"", p1);
-                var endbt = detailPageString.IndexOf("</a>", startbt);
-                var bta = detailPageString.Substring(startbt, endbt - startbt + 4);
-                var mbt = _regBt.Match(bta);
-                btRes.Name = mbt.Groups[2].Value;
-                btRes.Url = _uri.Scheme + "://" + _uri.Authority + "/bbs/" + mbt.Groups[1].Value;
-                resList.Add(btRes);
+                    var startbt = detailPageString.IndexOf("<a href=\"", p1);
+                    var endbt = detailPageString.IndexOf("</a>", startbt);
+                    var bta = detailPageString.Substring(startbt, endbt - startbt + 4);
+                    var mbt = _regBt.Match(bta);
+                    btRes.Name = mbt.Groups[2].Value;
+                    btRes.Url = _uri.Scheme + "://" + _uri.Authority + "/bbs/" + mbt.Groups[1].Value;
+                    resList.Add(btRes);
 
-                MyDbCOntextHelp.AddResourceList(resList);
-                for (int i = 0; i < resList.Count - 1; i++)
-                {
-                    res = await HttpHelp.DownloadImgAsync(resList[i].Url, moviedir);
+                    MyDbCOntextHelp.AddResourceList(resList);
+                    for (int i = 0; i < resList.Count - 1; i++)
+                    {
+                        res = await HttpHelp.DownloadImgAsync(resList[i].Url, moviedir);
+                    }
+                    res = await HttpHelp.DownloadFileAsync(btRes.Url, Path.Combine(moviedir, btRes.Name));
                 }
-                res = await HttpHelp.DownloadFileAsync(btRes.Url, Path.Combine(moviedir, btRes.Name));
+                LogHelp.Log("处理完毕：" + movieName);
+                return;
             }
-            _semaphore.Release();
-            LogHelp.Log("处理完毕：" + movieName, true);
-            return;
+            finally
+            {
+                _semaphore.Release();
+            }
         }
 
         private void Init()

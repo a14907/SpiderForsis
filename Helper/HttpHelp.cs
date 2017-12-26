@@ -42,7 +42,8 @@ namespace SpiderForSis001.Helper
                 }
                 catch (Exception ex)
                 {
-                    LogHelp.Log("页面获取失败：" + url , true);
+                    if(t==2)
+                        LogHelp.Log("=================================页面获取失败：" + url , true);
                     res = null;
                 }
             } while ((res == null || res.Length == 0) && t <= 2);
@@ -60,7 +61,6 @@ namespace SpiderForSis001.Helper
 
         public static async Task<string> GetPageStringAsync(string url)
         {
-            Console.WriteLine("下载：" + url);
             string res = null;
             int t = 0;
             do
@@ -80,7 +80,8 @@ namespace SpiderForSis001.Helper
                 }
                 catch (Exception ex)
                 {
-                    LogHelp.Log("页面获取失败：" + url , true);
+                    if (t == 2)
+                        LogHelp.Log("=================================页面获取失败：" + url , true);
                     res = null;
                 }
             } while ((res == null || res.Length == 0) && t <= 2);
@@ -139,7 +140,8 @@ namespace SpiderForSis001.Helper
                 }
                 catch (Exception ex)
                 {
-                    LogHelp.Log("bt文件获取失败：" + url , true);
+                    if (t == 2)
+                        LogHelp.Log("=================================bt文件获取失败：" + url , true);
                     res = false;
                 }
             } while (res == false && t <= 2);
@@ -158,7 +160,6 @@ namespace SpiderForSis001.Helper
 
         public static async Task<bool> DownloadFileAsync(string url, string fileName)
         {
-            Console.WriteLine("下载：" + url);
             bool res = false;
             int t = 0;
             do
@@ -196,7 +197,8 @@ namespace SpiderForSis001.Helper
                 }
                 catch (Exception ex)
                 {
-                    LogHelp.Log("bt文件获取失败：" + url , true);
+                    if (t == 2)
+                        LogHelp.Log("=================================bt文件获取失败：" + url , true);
                     res = false;
                 }
             } while (res == false && t <= 2);
@@ -266,7 +268,8 @@ namespace SpiderForSis001.Helper
                 } 
                 catch (Exception ex)
                 {
-                    LogHelp.Log("图片获取失败：" + url, true);
+                    if (t == 2)
+                        LogHelp.Log("=================================图片获取失败：" + url, true);
                     res = false;
                 }
             } while (res == false && t <= 2);
@@ -283,7 +286,6 @@ namespace SpiderForSis001.Helper
         }
         public static async Task<bool> DownloadImgAsync(string url, string path)
         {
-            Console.WriteLine("下载：" + url);
             bool res = false;
             int t = 0;
             do
@@ -321,7 +323,8 @@ namespace SpiderForSis001.Helper
                 } 
                 catch (Exception ex)
                 {
-                    LogHelp.Log("图片获取失败：" + url , true);
+                    if (t == 2)
+                        LogHelp.Log("=================================图片获取失败：" + url , true);
                     res = false;
                 }
             } while (res == false && t <= 2);

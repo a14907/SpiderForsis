@@ -40,7 +40,7 @@ namespace SpiderForSis001
         /// <param name="args"></param>
         static void Main(string[] args)
         {
-            ThreadPool.QueueUserWorkItem(ClearScreen);
+            //ThreadPool.QueueUserWorkItem(ClearScreen);
             int argLen = args.Length;
             if (argLen==1 && args[0]=="/?")
             {
