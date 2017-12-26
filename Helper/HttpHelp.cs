@@ -12,7 +12,7 @@ namespace SpiderForSis001.Helper
 {
     public static class HttpHelp
     {
-        private static HttpClient client = new HttpClient() { Timeout=new TimeSpan(0,0,10)};
+        private static HttpClient client = new HttpClient() { Timeout=new TimeSpan(0,0,5)};
         static HttpHelp()
         {
             client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36");
@@ -80,11 +80,15 @@ namespace SpiderForSis001.Helper
                 }
                 catch (Exception ex)
                 {
-                    if (t == 2)
-                        LogHelp.Log("=================================页面获取失败：" + url , true);
+                    if (t == 5)
+                    {
+                        LogHelp.Log("=================================页面获取失败：" + url, true);
+                        LogHelp.Log("================================="+ex.Message);
+                        LogHelp.Log("=================================", true);
+                    }
                     res = null;
                 }
-            } while ((res == null || res.Length == 0) && t <= 2);
+            } while ((res == null || res.Length == 0) && t <= 5);
             if (res == null || res.Length==0)
             {
                 MyDbCOntextHelp.AddErroeProcess(new Data.ErroeProcess

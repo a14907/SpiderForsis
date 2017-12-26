@@ -22,5 +22,10 @@ namespace SpiderForSis001.Helper
             if (IsLog && islog)
                 Console.WriteLine(str, arg1, arg2);
         }
+        public static void Log(string str, object arg1, object arg2, object arg3, bool islog = false)
+        {
+            if (IsLog && islog)
+                Console.WriteLine(str, arg1, arg2,arg3);
+        }
     }
 }

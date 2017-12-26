@@ -57,6 +57,7 @@ namespace SpiderForSis001.Helper
 
         internal async Task RunAsync()
         {
+            var res = await HttpHelp.GetPageStringAsync("http://38.103.161.140/bbs/thread-10091032-1-2.html");
             //准备环境，创建目录
             Init();
             //获取总页数
@@ -121,7 +122,7 @@ namespace SpiderForSis001.Helper
                         //LogHelp.Log("进度：{0}/{1},不符合要求。。。", i, ms.Count);
                         continue;
                     }
-                    LogHelp.Log("进度：{0}/{1}，符合要求", i, ms.Count);
+                    LogHelp.Log("进度：{0}/{1}，符合要求:{2}", i, ms.Count, item.Groups[1].Value, true);
                     //获取详情页的信息
                     _semaphore.WaitOne();
                     Thread.Sleep(waitopt[_random.Next(1000) % 4]);
