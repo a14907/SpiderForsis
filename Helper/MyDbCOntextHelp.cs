@@ -4,6 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 
 namespace SpiderForSis001.Helper
 {
@@ -20,6 +21,35 @@ namespace SpiderForSis001.Helper
                 }
                 db.MoviePages.Add(model);
                 return db.SaveChanges() >= 1;
+            }
+        }
+
+        public static bool SetHandled(MoviePage page,List<Resource> rs)
+        {
+            using (var db = new MyDbContext())
+            {
+                if (page!=null)
+                {
+                    page.IsHandler=true;
+                    var p=db.Entry<MoviePage>(page);
+                    p.State=EntityState.Detached;
+                    p.Property(m=>m.IsHandler).IsModified=true;
+                }
+               
+                if (rs!=null && rs.Count!=0)
+                {
+                    for(int i=0;i<rs.Count;i++)
+                    {
+                        var item=rs[i];
+                        item.IsHandler=true;
+                        var obj=db.Entry(item);
+                        obj.State=EntityState.Detached;
+                        obj.Property(m=>m.IsHandler).IsModified=true;
+                    }
+                }
+                int res=db.SaveChanges();
+                 
+                return  res>= ( (page==null?0:1) + (rs==null || rs.Count==0?0: rs.Count));
             }
         }
 

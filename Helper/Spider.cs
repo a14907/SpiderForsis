@@ -223,10 +223,15 @@ namespace SpiderForSis001.Helper
                     btRes.Url = _uri.Scheme + "://" + _uri.Authority + "/bbs/" + mbt.Groups[1].Value;
                     resList.Add(btRes);
 
+                    bool isAllHandle=false;
                     MyDbCOntextHelp.AddResourceList(resList);
                     for (int i = 0; i < resList.Count - 1; i++)
                     {
                         res = await HttpHelp.DownloadImgAsync(resList[i].Url, moviedir);
+                        if(res)
+                        {
+                            
+                        }
                     }
                     res = await HttpHelp.DownloadFileAsync(btRes.Url, Path.Combine(moviedir, btRes.Name));
                 }
