@@ -20,7 +20,7 @@ namespace SpiderForSis001
         static Program()
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            using (var db = new MyDbContext())
+            using (var db = new MyDbContext())//
             {
                 db.Database.EnsureCreated();
                 db.Database.Migrate();
